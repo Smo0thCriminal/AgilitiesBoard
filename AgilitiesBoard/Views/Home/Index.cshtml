@@ -1,0 +1,129 @@
+﻿@{
+    ViewBag.Title = "Home Page";
+}
+@model IEnumerable<AgilitiesBoard.Models.BoardModel>
+<div class="container">
+    <div class="row MyInputForm">
+        <div class="col-md-5">
+            <div class="row">
+                @using (Ajax.BeginForm("BoardPost", null, new AjaxOptions
+                {
+                    HttpMethod = "Post",
+                    InsertionMode = InsertionMode.Replace,
+                    UpdateTargetId = "results",
+                    OnSuccess = "onSuccessFunc"
+                }, new { @class = "form-horizontal", @id = "postForm" }))
+                {
+                    <div class="col-md-4">
+                        <div class="portrait">
+                            <img id="image" />
+                        </div>
+                        <div id="imageInput" class="form-group">
+                            <div style="position:relative;">
+                                <a class='btn' href='javascript:;'>
+                                    Custom image...
+                                    <input type="file" name="photo"
+                                           style="position:absolute;top:0;
+                                left:0;filter: alpha(opacity=0); opacity:0;
+                                background-color:transparent;color:transparent;">
+                                    <input type="hidden" name="Photo" />
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-8">
+                        <div class="form-group">
+                            <div class="col-md-8">
+                                <label>User Name</label>
+                                <input type="text" name="UserName" class="form-control" required />
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <div class="col-sm-5">
+                                <label>Date</label>
+                                <input type="text" class="form-control" name="Date" id="datepicker" required />
+                            </div>
+                            <div class="col-sm-5">
+                                <label>Gender</label>
+                                <select name="Gender" class="form-control">
+                                    <option value="true">Male</option>
+                                    <option value="false">Female</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <div class="col-md-12">
+                                <textarea id="textarea" maxlength="300" rows="3" type="text" name="Message" class="form-control" placeholder="Leave your comment here"></textarea>
+                                <span class="gray-comment" id="count">max 300 characters</span>
+                            </div>
+                            <div class="col-md-6 pull-right">
+                                <button type="submit" class="btn-danger btn-lg">
+                                    POST
+                                    <span class="glyphicon glyphicon-share-alt"></span>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                }
+            </div>
+        </div>
+        <div class="col-md-7">
+            <div id="results" class="container">
+
+                @if (Model != null)
+                {
+                    @Html.Partial("_BoardPage", Model)
+                }
+                else
+                {
+                    @Html.Partial("_BoardPage")
+                }
+
+        </div>
+    </div>
+</div>
+
+</div>
+<script>
+    $(function () {
+        var defaultImagesPath = "/Content/images/";
+
+        $("#postForm").validate();
+        $("#image").attr('src', defaultImagesPath + "men.jpg");
+        $("#textarea").keyup(function () {
+            $("#count").text("Characters left: " + (300 - $(this).val().length));
+        });
+
+        $("#datepicker").datetimepicker({
+            maxDate: '0',
+            timepicker: false
+        });
+
+        $("[name='photo']").change(function () {
+
+            var xhr = new XMLHttpRequest();
+            xhr.open("POST", "/home/upload", true);
+            xhr.setRequestHeader("Cache-Control", "no-cache");
+            xhr.setRequestHeader("X-File-Name", this.files[0].name);
+            xhr.setRequestHeader("X-File-Size", this.files[0].size);
+            xhr.setRequestHeader("Content-Type", "multipart/form-data");
+            xhr.onload = function (oEvent) {
+                var temp = JSON.parse(oEvent.currentTarget.responseText).imageUrl;
+                $("#image").attr('src', temp);
+                $("[name='Photo']").val(temp);
+            };
+
+            xhr.send(this.files[0]);
+
+        });
+    });
+
+    function onSuccessFunc() {
+        $("input[type=text], textarea").val("");
+        $("#count").text("max 300 characters");
+    };
+    function onFailureFunc(c) {
+        $("#error").text(c.statusText).addClass("recent-text");
+    };
+
+</script>
